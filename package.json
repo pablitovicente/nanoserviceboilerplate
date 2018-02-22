@@ -1,0 +1,50 @@
+{
+  "name": "simple-service-boiler-plate",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "./node_modules/eslint/bin/eslint.js . --format table",
+    "start": "node ./bootstrap.js",
+    "unit-test": "./node_modules/mocha/bin/mocha ./tests/units/*.js --watch"
+  },
+  "author": {
+    "name": "Pablito Vicente",
+    "email": "pablo.zissou@gmail.com",
+    "url": "noneyet :("
+  },
+  "dependencies": {
+    "@google/maps": "^0.4.5",
+    "ajv": "^6.1.1",
+    "async": "2.6.0",
+    "bluebird": "3.5.1",
+    "body-parser": "1.18.2",
+    "compression": "1.7.2",
+    "dotenv": "5.0.0",
+    "eslint-config-airbnb-base": "12.1.0",
+    "eslint-plugin-import": "2.9.0",
+    "express": "4.16.2",
+    "helmet": "3.11.0",
+    "jsonapi-serializer": "3.5.6",
+    "lodash": "4.17.5",
+    "moment": "^2.20.1",
+    "moment-duration-format": "^2.2.2",
+    "mongoose": "5.0.6",
+    "mongoose-validator": "2.0.1",
+    "mqtt": "^2.15.3",
+    "mysql2": "^1.5.2",
+    "request": "2.83.0",
+    "sequelize": "^4.33.4",
+    "winston": "3.0.0-rc1",
+    "winston-daily-rotate-file": "2.0.0-rc.2"
+  },
+  "devDependencies": {
+    "chai": "4.1.2",
+    "chai-as-promised": "7.1.1",
+    "chai-http": "3.0.0",
+    "eslint": "4.18.1",
+    "jsome": "^2.5.0",
+    "json-schema-faker": "^0.5.0-rc13",
+    "mocha": "5.0.1",
+    "time-series-data-generator": "^0.1.4"
+  }
+}
