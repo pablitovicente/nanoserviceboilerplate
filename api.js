@@ -1,5 +1,4 @@
 const express = require('express');
-const moment = require('moment');
 require('moment-duration-format');
 const ApiController = require('./controller.js');
 
@@ -14,7 +13,7 @@ const Api = function Api(service) {
     order: service.orderModel,
     orderMeal: service.orderMealModel,
     sequelize: service.sequelize,
-    queue: service.queue
+    queue: service.queue,
   });
 };
 
@@ -27,7 +26,7 @@ const humanizeSequelizeError = (errors) => {
       message: anError.message,
       type: anError.type,
       path: anError.path,
-      value: anError.value
+      value: anError.value,
     });
   });
   return Promise.resolve(allValidationErrors);
@@ -55,7 +54,7 @@ Api.prototype.routes = function ApiRoutes() {
   router.get('/restaurants/:rating', (req, res) => {
     this.controller
       .findByRating({
-        rating: req.params.rating
+        rating: req.params.rating,
       })
       .then((dbResult) => {
         if (dbResult === null) {
@@ -75,7 +74,7 @@ Api.prototype.routes = function ApiRoutes() {
     const newModelData = req.body;
     this.controller
       .addNew({
-        dataToSave: newModelData
+        dataToSave: newModelData,
       })
       .then(() => {
         res.status(201).send();
@@ -94,7 +93,7 @@ Api.prototype.routes = function ApiRoutes() {
     this.controller
       .patch({
         modelValues: req.body,
-        id: req.params.id
+        id: req.params.id,
       })
       .then((saveModelResult) => {
         if (saveModelResult < 1) {
@@ -116,7 +115,7 @@ Api.prototype.routes = function ApiRoutes() {
   router.delete('/restaurants/:id', (req, res) => {
     this.controller
       .delete({
-        id: req.params.id
+        id: req.params.id,
       })
       .then((deleteResult) => {
         if (deleteResult) {
@@ -137,7 +136,7 @@ Api.prototype.routes = function ApiRoutes() {
     this.controller
       .rate({
         modelValues: req.body,
-        id: req.params.id
+        id: req.params.id,
       })
       .then((saveModelResult) => {
         if (saveModelResult < 1) {
@@ -151,7 +150,7 @@ Api.prototype.routes = function ApiRoutes() {
         this.service.log.error(`${this.service.name}: ${reason}`);
         const errorBody = { info: reason.message };
         res.status(500).send(errorBody);
-      });    
+      });
   });
 
   router.post('/order', (req, res) => {
@@ -163,7 +162,7 @@ Api.prototype.routes = function ApiRoutes() {
     } else {
       this.controller
         .placeOrder({
-          modelValues: req.body
+          modelValues: req.body,
         })
         .then((saveModelResult) => {
           res.status(200).send(saveModelResult);

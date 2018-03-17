@@ -4,7 +4,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const compression = require('compression');
-const Api = require('./api.js');
 
 
 class Service {
@@ -29,13 +28,13 @@ class Service {
         'DB_SCHEMA',
         'NODE_ENV',
         'SERVICE_NAME',
-        'PORT'
+        'PORT',
       ];
       const environmentKeys = Object.keys(process.env);
 
       requiredEnvironmentVariables.forEach((aRequiredEnvVariable) => {
         if (environmentKeys.indexOf(aRequiredEnvVariable) === -1) {
-          err = `Service misconfiguration, missing environment variable: ${aRequiredEnvVariable}`;
+          err = Error(`Service misconfiguration, missing environment variable: ${aRequiredEnvVariable}`);
         }
       });
 
@@ -58,17 +57,17 @@ class Service {
             level: 'debug',
             filename: path.join(__dirname, '/logs/', `${this.name}-`),
             datePattern: 'yyyyMMdd.log',
-            timestamp: true
-          })
+            timestamp: true,
+          }),
         ],
-        exitOnError: false
+        exitOnError: false,
       });
       this.log.info(`${this.name}: Logger Initialized.`);
       resolve();
     });
   }
 
-  setupDB(Sequelize) {
+  setupSqlDB(Sequelize) {
     return new Promise((resolve, reject) => {
       this.sequelize = new Sequelize(process.env.DB_SCHEMA, process.env.DB_USER, process.env.DB_PASS, {
         host: process.env.DB_HOST,
@@ -78,10 +77,10 @@ class Service {
           max: 5,
           min: 0,
           acquire: 30000,
-          idle: 10000
+          idle: 10000,
         },
         operatorsAliases: false,
-        logging: false
+        logging: false,
       });
 
       this.sequelize
@@ -95,9 +94,7 @@ class Service {
           this.log.info(`${this.name}: DB connection initialized.`);
           return resolve();
         })
-        .catch((reason) => {
-          return reject(reason);
-        });
+        .catch(reason => reject(reason));
     });
   }
 
@@ -124,12 +121,36 @@ class Service {
       });
   }
 
+  setupMongoDB(mongoose) {
+    return new Promise((resolve, reject) => {
+      const dbConnectionOptions = {
+        db: { native_parser: true },
+        user: '',
+        pass: '',
+      };
+      mongoose.connect(
+        `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_SCHEMA}`,
+        dbConnectionOptions,
+        (err) => {
+          if (err) {
+            this.log.error(`${this.name}: DB connection failed.`);
+            this.log.error(`${this.name}: ${err}`);
+            reject(err);
+          } else {
+            this.log.info(`${this.name}: DB connection initialized.`);
+            resolve();
+          }
+        },
+      );
+    });
+  }
+
   setupQueue(queueProvider) {
     return new Promise((resolve, reject) => {
       const queue = queueProvider.connect('mqtt://localhost', { connectTimeout: 1000, debug: true });
 
       let maxConnectionWait = 10000;
-      const waitForConnection = setInterval(() => { 
+      const waitForConnection = setInterval(() => {
         maxConnectionWait -= 1000;
         if (maxConnectionWait === 0) {
           clearInterval(waitForConnection);
@@ -172,12 +193,12 @@ class Service {
         next();
       });
 
-      app.get('/ping', (req, res) => {
+      app.get('/health', (req, res) => {
         res.send({
           upTime: process.uptime(),
           numberOfReceivedRequests: this.numberOfReceivedRequests,
           osFreeMem: os.freemem(),
-          serviceMemoryUsage: process.memoryUsage()
+          serviceMemoryUsage: process.memoryUsage(),
         });
       });
 
@@ -195,10 +216,10 @@ class Service {
     });
   }
 
-  setupApi() {
+  setupApi(Api) {
     return new Promise((resolve) => {
       const api = new Api(this);
-      this.express.use(api.routes());
+      this.express.use('/api/v1', api.routes());
       this.log.info(`${this.name}: Api has been configured.`);
       resolve();
     });
@@ -216,17 +237,27 @@ class Service {
     });
   }
 
-  startService(http) {
+  createService(http) {
     return new Promise((resolve, reject) => {
       this.server = http.createServer(this.express);
       try {
-        this.server.listen(this.express.get('port'));
-        this.log.info(`${this.name}: Up and Running`);
+        this.log.info(`${this.name}: server created`);
         resolve(this);
       } catch (reason) {
         reject(reason);
       }
     });
+  }
+
+  startService() {
+    this.server.listen(this.express.get('port'));
+    this.log.info(`${this.name}: Up and Running`);
+    return Promise.resolve('Server Started');
+  }
+
+  stopService() {
+    this.server.close();
+    return Promise.resolve('Server Stopped');
   }
 }
 
